@@ -1,18 +1,28 @@
 import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-
+import ProfileImg from "@/images/profile.png";
 export default function About() {
   const founders = [
     {
-      name: "John Doe",
+      name: "Sijo Samkutty",
       role: "Founder",
-      image: "/placeholder.svg?height=300&width=300",
+      image: ProfileImg,
     },
     {
-      name: "Jane Smith",
+      name: "Shiju Samkutty",
       role: "Co-founder",
-      image: "/placeholder.svg?height=300&width=300",
+      image: ProfileImg,
+    },
+    {
+      name: "Ronald Thayil",
+      role: "Director",
+      image: ProfileImg,
+    },
+    {
+      name: "Shawn Liju",
+      role: "Director",
+      image: ProfileImg,
     },
   ];
 
@@ -25,21 +35,23 @@ export default function About() {
         <section className="mb-12 sm:mb-16">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Our Vision</h2>
           <p className="text-gray-700">
-            At TraderStore, we envision a world where quality products are
-            accessible to everyone. We strive to create a seamless shopping
-            experience that connects consumers with the best products from
-            around the globe.
+            At 4pals, we envision a world where quality products are accessible
+            to everyone. We strive to create a seamless shopping experience that
+            connects consumers with the best products from around the globe.
           </p>
         </section>
 
         <section className="mb-12 sm:mb-16">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Our Story</h2>
           <p className="text-gray-700">
-            Founded in 2010, TraderStore began as a small local shop with a big
-            dream. Over the years, we&apos;ve grown into a global e-commerce
-            platform, serving customers in over 50 countries. Our journey has
-            been driven by our passion for quality products and exceptional
-            customer service.
+            FourPalsVentures Pvt Ltd is a sourcing company founded by four
+            friends, dedicated to helping businesses grow by providing
+            high-quality packing materials and essential commodities. We
+            specialize in sourcing a wide range of products, including lug caps,
+            ROPP caps, standup pouches, and much more. Whether you need reliable
+            packaging solutions or commodities like rice and spices, we ensure
+            you get the best products without any hassle. Let us be your trusted
+            partner in meeting all your sourcing needs
           </p>
         </section>
 

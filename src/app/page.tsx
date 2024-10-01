@@ -20,7 +20,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="text-center text-white px-4">
               <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4">
-                Welcome to TraderStore
+                Welcome to 4pal&apos;s
               </h1>
               <p className="text-lg sm:text-xl mb-8">
                 Discover amazing products at great prices

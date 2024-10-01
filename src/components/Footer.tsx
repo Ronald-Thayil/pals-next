@@ -112,7 +112,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-200 text-center text-gray-600">
-          © {new Date().getFullYear()} TraderStore. All rights reserved.
+          © {new Date().getFullYear()} Fourpals Ventures Pvt. All rights
+          reserved.
         </div>
       </div>
     </footer>

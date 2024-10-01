@@ -13,7 +13,7 @@ export default function Header() {
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold text-primary">
-          TraderStore
+          4Pals
         </Link>
         <nav className="hidden md:flex space-x-4">
           <Link href="/" className="text-gray-600 hover:text-primary">

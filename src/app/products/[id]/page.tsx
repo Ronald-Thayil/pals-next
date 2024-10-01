@@ -43,9 +43,6 @@ export default function ProductDetail({ params }: { params: { id: string } }) {
               ${product.price}
             </p>
             <p className="text-gray-700 mb-6">{product.description}</p>
-            <button className="w-full sm:w-auto bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dark">
-              Add to Cart
-            </button>
           </div>
         </div>
 
