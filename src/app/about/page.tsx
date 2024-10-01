@@ -36,7 +36,7 @@ export default function About() {
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Our Story</h2>
           <p className="text-gray-700">
             Founded in 2010, TraderStore began as a small local shop with a big
-            dream. Over the years, we've grown into a global e-commerce
+            dream. Over the years, we&apos;ve grown into a global e-commerce
             platform, serving customers in over 50 countries. Our journey has
             been driven by our passion for quality products and exceptional
             customer service.

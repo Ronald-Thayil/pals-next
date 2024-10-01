@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, Menu, X } from "lucide-react";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,9 +29,6 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex items-center space-x-4">
-          <Link href="/cart" className="text-gray-600 hover:text-primary">
-            <ShoppingCart className="h-6 w-6" />
-          </Link>
           <button
             className="md:hidden text-gray-600 hover:text-primary"
             onClick={toggleMenu}
