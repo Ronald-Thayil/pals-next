@@ -71,27 +71,29 @@ export default function Contact() {
             </h2>
             <div className="aspect-w-16 aspect-h-9 mb-4">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215707164939!2d-73.98823668459377!3d40.74844097932764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1635789141347!5m2!1sen!2sus"
-                width="600"
-                height="450"
-                style={{ border: 0 }}
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4205.193639313382!2d72.54535297585336!3d23.097565279121294!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e831824190719%3A0x73f901e0e996377c!2sVandemataram%20Icon!5e1!3m2!1sen!2sin!4v1727854107067!5m2!1sen!2sin"
+                style={{ border: 0, width: "100%", height: "350px" }}
                 allowFullScreen={true}
                 loading="lazy"
                 className="w-full h-full"
+                referrerPolicy="no-referrer-when-downgrade"
               ></iframe>
             </div>
             <div className="space-y-4">
               <div className="flex items-center">
                 <MapPin className="h-6 w-6 text-primary mr-2" />
-                <p>123 Trading Street, New York, NY 10001</p>
+                <p>
+                  E-202, Vande Matram Icon, Opp Sukan Residency, Gota
+                  Ahmedabad-382481
+                </p>
               </div>
               <div className="flex items-center">
                 <Phone className="h-6 w-6 text-primary mr-2" />
-                <p>+1 (555) 123-4567</p>
+                <p>(+91) 7990257851</p>
               </div>
               <div className="flex items-center">
                 <Mail className="h-6 w-6 text-primary mr-2" />
-                <p>info@traderstore.com</p>
+                <p>sales@fourpalsventures.com</p>
               </div>
             </div>
           </div>

@@ -25,12 +25,12 @@ export default function Home() {
               <p className="text-lg sm:text-xl mb-8">
                 Discover amazing products at great prices
               </p>
-              <Link
+              {/* <Link
                 href="/products"
                 className="bg-primary text-white px-6 py-3 rounded-md hover:bg-primary-dark"
               >
                 Shop Now
-              </Link>
+              </Link> */}
             </div>
           </div>
         </section>
@@ -110,7 +110,7 @@ export default function Home() {
         </section>
 
         {/* CTA */}
-        <section className="py-12 sm:py-16 bg-primary text-white">
+        {/* <section className="py-12 sm:py-16 bg-primary text-white">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">
               Join Our Community
@@ -125,7 +125,7 @@ export default function Home() {
               Sign Up Now
             </Link>
           </div>
-        </section>
+        </section> */}
       </main>
       <Footer />
     </div>

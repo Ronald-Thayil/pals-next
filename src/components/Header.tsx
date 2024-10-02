@@ -30,6 +30,13 @@ export default function Header() {
           </Link>
         </nav>
         <div className="flex items-center space-x-4">
+          <a
+            href={`tel:${+917990257851}`}
+            className="inline-flex items-center justify-center px-4 py-2 text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Get in Touch
+          </a>
+
           <button
             className="md:hidden text-gray-600 hover:text-primary"
             onClick={toggleMenu}
