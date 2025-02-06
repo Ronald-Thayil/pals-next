@@ -68,13 +68,14 @@ export default function QuotationFormPage() {
   const handleSubmit = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
-      const Amount = Number(product.quantity) + Number(product.rate);
+      const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
       totalAmount += Amount;
       return {
         ...product,
         Amount,
       };
     });
+
     const gstAmount = totalAmount * 0.18;
     const netBasicAmount = totalAmount + gstAmount;
 
@@ -87,7 +88,9 @@ export default function QuotationFormPage() {
       gstAmount,
       netBasicAmount,
     };
+
     const htmlContent = QuotationTemplate(payload);
+
     // Create a hidden iframe to load the HTML content
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
@@ -99,10 +102,11 @@ export default function QuotationFormPage() {
     // Append the iframe to the body
     document.body.appendChild(iframe);
 
-    // Trigger the print dialog in the iframe, where the user can select "Save as PDF"
-    iframe.contentWindow.print();
+    // Fix: Use an explicit if-statement instead of optional chaining with &&
+    if (iframe.contentWindow) {
+      iframe.contentWindow.print();
+    }
   };
-  console.log(formData);
 
   return (
     <>
