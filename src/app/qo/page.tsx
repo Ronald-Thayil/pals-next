@@ -16,6 +16,8 @@ type Product = {
 type FormData = {
   date: string;
   name: string;
+  companyName: string;
+  qoNo: string;
   address: string;
   products: Product[];
 };
@@ -24,6 +26,8 @@ export default function QuotationFormPage() {
   const [formData, setFormData] = useState<FormData>({
     date: "",
     name: "",
+    companyName: "",
+    qoNo: "",
     address: "",
     products: [
       { description: "", hnsCode: "", rate: "", quantity: "", "unit-0": "KG" },
@@ -83,6 +87,8 @@ export default function QuotationFormPage() {
       date: formateDate(formData.date),
       name: formData.name,
       address: formData.address,
+      companyName: formData.companyName,
+      qoNo: formData.qoNo,
       productList,
       totalAmount,
       gstAmount,
@@ -128,6 +134,20 @@ export default function QuotationFormPage() {
               className="w-full p-2 border border-gray-300 rounded"
             />
           </div>
+          <div className="mb-5">
+            <label htmlFor="name" className="block mb-2">
+              Quotation No.
+            </label>
+            <input
+              type="text"
+              id="qoNo"
+              name="qoNo"
+              placeholder="Enter Quotation No."
+              value={formData.qoNo}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
 
           <div className="mb-5">
             <label htmlFor="name" className="block mb-2">
@@ -143,6 +163,20 @@ export default function QuotationFormPage() {
               className="w-full p-2 border border-gray-300 rounded"
             />
           </div>
+          <div className="mb-5">
+            <label htmlFor="companyName" className="block mb-2">
+              Company Name
+            </label>
+            <input
+              type="text"
+              id="companyName"
+              name="companyName"
+              placeholder="Enter your company name"
+              value={formData.companyName}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
 
           <div className="mb-5">
             <label htmlFor="address" className="block mb-2">
@@ -151,7 +185,7 @@ export default function QuotationFormPage() {
             <textarea
               id="address"
               name="address"
-              placeholder="67 /83-a Flat no2,\nFirst floor Sundaram Paradise,\nInside of maheshwari mill \nIshwar Gangi, Varanasi, UP 221001"
+              placeholder="Enter address"
               value={formData.address}
               onChange={handleChange}
               rows={4}
