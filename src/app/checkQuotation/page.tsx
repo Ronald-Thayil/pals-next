@@ -1,5 +1,5 @@
 import React from "react";
-import { QuotationTemplate } from "../qo/quotationTemplate";
+import { QuotationTemplate } from "../quotation/quotationTemplate";
 
 const Page = () => {
   // Example data
