@@ -96,7 +96,7 @@ export const QuotationTemplate = (props) => {
       </div>
       <div class="quotation">QUOTATION ORDER</div>
       <div style="display: flex; justify-content: space-between;">
-         <p><strong>QO No.:</strong> ${props.qoNo}</p>
+         <p><strong>QO No.:</strong> ${props.quotationId}</p>
          <p><strong>Date:</strong> ${props.date}</p>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -138,7 +138,7 @@ export const QuotationTemplate = (props) => {
                <td class="text-left">${product.description}</td>
                <td>${product.rate}</td>
                <td>${product.quantity}</td>
-               <td>${product[`unit-${key}`]}</td>
+               <td>${product.unit}</td>
                <td class="text-right">₹${parseStandardNumber(
                  product.Amount
                )}</td>

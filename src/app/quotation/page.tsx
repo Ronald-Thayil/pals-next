@@ -2,6 +2,7 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import React, { useState, ChangeEvent } from "react";
+
 import { QuotationTemplate } from "./quotationTemplate";
 import { formateDate } from "@/helper/common";
 
@@ -17,17 +18,16 @@ type FormData = {
   date: string;
   name: string;
   companyName: string;
-  qoNo: string;
   address: string;
   products: Product[];
 };
 
 export default function QuotationFormPage() {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     date: "",
     name: "",
     companyName: "",
-    qoNo: "",
     address: "",
     products: [
       { description: "", hnsCode: "", rate: "", quantity: "", "unit-0": "KG" },
@@ -42,8 +42,11 @@ export default function QuotationFormPage() {
 
     if (index !== null) {
       const updatedProducts = [...formData.products];
-
-      updatedProducts[index][name as keyof Product] = value;
+      if (name.startsWith("unit")) {
+        updatedProducts[index]["unit"] = value;
+      } else {
+        updatedProducts[index][name as keyof Product] = value;
+      }
 
       setFormData({ ...formData, products: updatedProducts });
     } else {
@@ -63,13 +66,12 @@ export default function QuotationFormPage() {
             hnsCode: "",
             rate: "",
             quantity: "",
-            [`unit-${i}`]: "KG",
+            unit: "KG",
           }
       ),
     });
   };
-
-  const handleSubmit = () => {
+  const genratePayload = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
       const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
@@ -88,29 +90,57 @@ export default function QuotationFormPage() {
       name: formData.name,
       address: formData.address,
       companyName: formData.companyName,
-      qoNo: formData.qoNo,
       productList,
       totalAmount,
       gstAmount,
       netBasicAmount,
     };
+    return payload;
+  };
 
-    const htmlContent = QuotationTemplate(payload);
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const payload = genratePayload();
+      const response = await fetch("/api/quotations/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // Create a hidden iframe to load the HTML content
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.width = "0px";
-    iframe.style.height = "0px";
-    iframe.style.border = "none";
-    iframe.srcdoc = htmlContent;
+      const result = await response.json();
 
-    // Append the iframe to the body
-    document.body.appendChild(iframe);
+      if (result.success) {
+        const htmlContent = QuotationTemplate(result.quotation);
 
-    // Fix: Use an explicit if-statement instead of optional chaining with &&
-    if (iframe.contentWindow) {
-      iframe.contentWindow.print();
+        // Generate PDF with filename
+        const quotationId = result.quotation.quotationId.replace(/\//g, "-");
+        const fileName = `Quotation-${quotationId}.pdf`;
+
+        // ✅ Dynamically import html2pdf on the client
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const html2pdf = (await import("html2pdf.js")).default;
+        const opt = {
+          margin: [0.3, 0.5, 0, 0.5],
+          filename: fileName,
+          image: { type: "jpeg", quality: 1 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        };
+
+        // New Promise-based usage:
+        html2pdf().from(htmlContent).set(opt).save();
+      } else {
+        alert("Failed to add quotation: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error", error);
+      alert("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,20 +160,6 @@ export default function QuotationFormPage() {
               id="date"
               name="date"
               value={formData.date}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-          </div>
-          <div className="mb-5">
-            <label htmlFor="name" className="block mb-2">
-              Quotation No.
-            </label>
-            <input
-              type="text"
-              id="qoNo"
-              name="qoNo"
-              placeholder="Enter Quotation No."
-              value={formData.qoNo}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
             />
@@ -209,7 +225,7 @@ export default function QuotationFormPage() {
 
           {formData.products.map((product, index) => (
             <div
-              key={index}
+              key={"products" + index}
               className="border border-gray-200 rounded-lg p-4 mb-5"
             >
               <h2 className="text-lg font-bold mb-4">Product {index + 1}</h2>
@@ -274,20 +290,22 @@ export default function QuotationFormPage() {
                 <div className="flex gap-4">
                   <label className="flex items-center">
                     <input
+                      id={`unit-kg-${index}`}
                       type="radio"
-                      name={`unit-${index}`} // Ensure unique name per product
+                      name={`unit-${index}`} // unique name per product
                       value="KG"
-                      checked={product[`unit-${index}`] === "KG"}
+                      checked={product.unit === "KG"}
                       onChange={(e) => handleChange(e, index)}
                     />
                     <span className="ml-2">KG</span>
                   </label>
                   <label className="flex items-center">
                     <input
+                      id={`unit-pc-${index}`}
                       type="radio"
-                      name={`unit-${index}`} // Ensure unique name per product
+                      name={`unit-${index}`} // unique name per product
                       value="Piece"
-                      checked={product[`unit-${index}`] === "Piece"}
+                      checked={product.unit === "Piece"}
                       onChange={(e) => handleChange(e, index)}
                     />
                     <span className="ml-2">Piece</span>
@@ -300,8 +318,9 @@ export default function QuotationFormPage() {
           <button
             onClick={handleSubmit}
             className="w-full p-3 bg-blue-500 text-white rounded hover:bg-blue-600"
+            disabled={loading}
           >
-            Submit
+            {loading ? "Adding..." : "Add Quotation"}
           </button>
         </div>
       </div>
