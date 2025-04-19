@@ -138,7 +138,7 @@ export const QuotationTemplate = (props) => {
                <td class="text-left">${product.description}</td>
                <td>${product.rate}</td>
                <td>${product.quantity}</td>
-               <td>${product[`unit-${key}`]}</td>
+               <td>${product.unit}</td>
                <td class="text-right">₹${parseStandardNumber(
                  product.Amount
                )}</td>
