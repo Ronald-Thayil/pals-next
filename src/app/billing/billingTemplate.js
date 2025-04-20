@@ -121,14 +121,14 @@ export const BillingTemplate = (props) => {
             <th>Amount(INR)</th>
          </tr>
          ${props.productList
-           .map((product, key) => {
+           .map((product) => {
              return `
          <tr>
             <td class="text-left">${product.description}</td>
             <td>${product.quantity}</td>
-            <td>${product.hnsCode}</td>
+            <td>${product.hsnCode}</td>
             <td>${product.rate}</td>
-            <td>${product[`unit-${key}`]}</td>
+            <td>${product.unit}</td>
             <td class="text-right">₹${parseStandardNumber(product.Amount)}
             </td>
          </tr>

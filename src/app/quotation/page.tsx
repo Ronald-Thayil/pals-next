@@ -8,7 +8,7 @@ import { formateDate } from "@/helper/common";
 
 type Product = {
   description: string;
-  hnsCode: string;
+  hsnCode: string;
   rate: string;
   quantity: string;
   [key: string]: string | "KG" | "Piece"; // Allow dynamic keys like 'unit-0', 'unit-1', etc.
@@ -24,13 +24,14 @@ type FormData = {
 
 export default function QuotationFormPage() {
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState<FormData>({
     date: "",
     name: "",
     companyName: "",
     address: "",
     products: [
-      { description: "", hnsCode: "", rate: "", quantity: "", "unit-0": "KG" },
+      { description: "", hsnCode: "", rate: "", quantity: "", unit: "KG" },
     ],
   });
 
@@ -63,7 +64,7 @@ export default function QuotationFormPage() {
         (_, i) =>
           formData.products[i] || {
             description: "",
-            hnsCode: "",
+            hsnCode: "",
             rate: "",
             quantity: "",
             unit: "KG",
@@ -244,14 +245,14 @@ export default function QuotationFormPage() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor={`hnsCode-${index}`} className="block mb-2">
-                  HNS Code
+                <label htmlFor={`hsnCode-${index}`} className="block mb-2">
+                  HSN Code
                 </label>
                 <input
                   type="text"
-                  id={`hnsCode-${index}`}
-                  name="hnsCode"
-                  value={product.hnsCode}
+                  id={`hsnCode-${index}`}
+                  name="hsnCode"
+                  value={product.hsnCode}
                   onChange={(e) => handleChange(e, index)}
                   className="w-full p-2 border border-gray-300 rounded"
                 />

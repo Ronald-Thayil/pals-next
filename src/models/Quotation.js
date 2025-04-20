@@ -6,6 +6,7 @@ const ProductSchema = new Schema({
   quantity: Number,
   unit: String,
   Amount: Number,
+  hnsCode: String,
 });
 
 const QuotationSchema = new Schema(
