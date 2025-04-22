@@ -3,7 +3,6 @@ import { BillingTemplate } from "../billing/billingTemplate";
 const Page = () => {
   // Example data
   const props = {
-    invoiceNo: "FVPL/24-25/002",
     invoiceDate: "14/02/2025",
     buyerInfo:
       "Sree Padma Aqua Flora \nAyakat Manakkapady, \nAshokapuram, \nAluva Kerala 683101",

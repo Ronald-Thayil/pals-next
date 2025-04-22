@@ -7,7 +7,7 @@ import { formateDate, numberToWords } from "@/helper/common";
 
 type Product = {
   description: string;
-  hnsCode: string;
+  hsnCode: string;
   rate: string;
   quantity: string;
   [key: string]: string | "KG" | "Piece"; // Allow dynamic keys like 'unit-0', 'unit-1', etc.
@@ -28,6 +28,8 @@ type FormData = {
 };
 
 export default function QuotationFormPage() {
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState<FormData>({
     invoiceNo: "",
     invoiceDate: "",
@@ -40,7 +42,7 @@ export default function QuotationFormPage() {
     shipState: "",
     shipStateCode: "",
     products: [
-      { description: "", hnsCode: "", rate: "", quantity: "", "unit-0": "KG" },
+      { description: "", hsnCode: "", rate: "", quantity: "", unit: "KG" },
     ],
   });
 
@@ -52,8 +54,11 @@ export default function QuotationFormPage() {
 
     if (index !== null) {
       const updatedProducts = [...formData.products];
-
-      updatedProducts[index][name as keyof Product] = value;
+      if (name.startsWith("unit")) {
+        updatedProducts[index]["unit"] = value;
+      } else {
+        updatedProducts[index][name as keyof Product] = value;
+      }
 
       setFormData({ ...formData, products: updatedProducts });
     } else {
@@ -70,16 +75,16 @@ export default function QuotationFormPage() {
         (_, i) =>
           formData.products[i] || {
             description: "",
-            hnsCode: "",
+            hsnCode: "",
             rate: "",
             quantity: "",
-            [`unit-${i}`]: "KG",
+            unit: "KG",
           }
       ),
     });
   };
 
-  const handleSubmit = () => {
+  const genratePayload = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
       const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
@@ -112,23 +117,52 @@ export default function QuotationFormPage() {
       roundNetBasicAmount,
       amountToWords: numberToWords(roundNetBasicAmount),
     };
-    debugger;
-    const htmlContent = BillingTemplate(payload);
+    return payload;
+  };
 
-    // Create a hidden iframe to load the HTML content
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.width = "0px";
-    iframe.style.height = "0px";
-    iframe.style.border = "none";
-    iframe.srcdoc = htmlContent;
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const payload = genratePayload();
+      const response = await fetch("/api/invoice/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // Append the iframe to the body
-    document.body.appendChild(iframe);
+      const result = await response.json();
 
-    // Fix: Use an explicit if-statement instead of optional chaining with &&
-    if (iframe.contentWindow) {
-      iframe.contentWindow.print();
+      if (result.success) {
+        const htmlContent = BillingTemplate(payload);
+
+        // Generate PDF with filename
+        const invoiceId = result.invoice.invoiceId.replace(/\//g, "-");
+        const fileName = `Invoice-${invoiceId}.pdf`;
+
+        // ✅ Dynamically import html2pdf on the client
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const html2pdf = (await import("html2pdf.js")).default;
+        const opt = {
+          margin: [0.3, 0.5, 0, 0.5],
+          filename: fileName,
+          image: { type: "jpeg", quality: 1 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        };
+
+        // New Promise-based usage:
+        html2pdf().from(htmlContent).set(opt).save();
+      } else {
+        alert("Failed to add quotation: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error", error);
+      alert("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -315,14 +349,14 @@ export default function QuotationFormPage() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor={`hnsCode-${index}`} className="block mb-2">
-                  HNS Code
+                <label htmlFor={`hsnCode-${index}`} className="block mb-2">
+                  HSN Code
                 </label>
                 <input
                   type="text"
-                  id={`hnsCode-${index}`}
-                  name="hnsCode"
-                  value={product.hnsCode}
+                  id={`hsnCode-${index}`}
+                  name="hsnCode"
+                  value={product.hsnCode}
                   onChange={(e) => handleChange(e, index)}
                   className="w-full p-2 border border-gray-300 rounded"
                 />
@@ -361,20 +395,22 @@ export default function QuotationFormPage() {
                 <div className="flex gap-4">
                   <label className="flex items-center">
                     <input
+                      id={`unit-kg-${index}`}
                       type="radio"
-                      name={`unit-${index}`} // Ensure unique name per product
+                      name={`unit-${index}`} // unique name per product
                       value="KG"
-                      checked={product[`unit-${index}`] === "KG"}
+                      checked={product.unit === "KG"}
                       onChange={(e) => handleChange(e, index)}
                     />
                     <span className="ml-2">KG</span>
                   </label>
                   <label className="flex items-center">
                     <input
+                      id={`unit-pc-${index}`}
                       type="radio"
-                      name={`unit-${index}`} // Ensure unique name per product
+                      name={`unit-${index}`} // unique name per product
                       value="Piece"
-                      checked={product[`unit-${index}`] === "Piece"}
+                      checked={product.unit === "Piece"}
                       onChange={(e) => handleChange(e, index)}
                     />
                     <span className="ml-2">Piece</span>
@@ -386,9 +422,10 @@ export default function QuotationFormPage() {
 
           <button
             onClick={handleSubmit}
-            className="w-full p-3 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="primary-btn"
+            disabled={loading}
           >
-            Submit
+            {loading ? "Adding..." : "Add Invoice"}
           </button>
         </div>
       </div>
