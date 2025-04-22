@@ -12,11 +12,11 @@ export default function HeaderAdmin() {
         </Link>
         <div>
           <Link
-            href=""
+            href="/login"
             className="px-3.5 py-2 text-sm bg-sky-500 text-white rounded hover:bg-sky-600"
           >
             {" "}
-            Contact Us
+            Logout
           </Link>
         </div>
       </div>

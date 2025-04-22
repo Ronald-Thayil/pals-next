@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, ChangeEvent } from "react";
+import React, { useState, ChangeEvent, useEffect } from "react";
 
 import { QuotationTemplate } from "../helper/template/quotationTemplate";
 import { formateDate } from "@/helper/common";
@@ -8,12 +8,13 @@ import { formateDate } from "@/helper/common";
 type Product = {
   description: string;
   hsnCode: string;
-  rate: string;
-  quantity: string;
-  [key: string]: string | "KG" | "Piece"; // Allow dynamic keys like 'unit-0', 'unit-1', etc.
+  rate: number;
+  quantity: number;
+  unit: "KG" | "Piece";
 };
 
 type FormData = {
+  quotationId: string;
   date: string;
   name: string;
   companyName: string;
@@ -21,18 +22,32 @@ type FormData = {
   products: Product[];
 };
 
-export default function QuotationFormPage() {
+type PropsTypeValue = {
+  data: FormData | null;
+  onClose: (fromModal: boolean) => void;
+};
+
+export default function QuotationFormPage(props: PropsTypeValue) {
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState<FormData>({
+  const defaultProduct: Product = {
+    description: "",
+    hsnCode: "",
+    rate: 0,
+    quantity: 0,
+    unit: "KG",
+  };
+
+  const defaultFormData: FormData = {
+    quotationId: "",
     date: "",
     name: "",
     companyName: "",
     address: "",
-    products: [
-      { description: "", hsnCode: "", rate: "", quantity: "", unit: "KG" },
-    ],
-  });
+    products: [defaultProduct],
+  };
+
+  const [formData, setFormData] = useState<FormData>(defaultFormData);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -42,10 +57,13 @@ export default function QuotationFormPage() {
 
     if (index !== null) {
       const updatedProducts = [...formData.products];
+
       if (name.startsWith("unit")) {
-        updatedProducts[index]["unit"] = value;
+        updatedProducts[index].unit = value as "KG" | "Piece";
+      } else if (name === "rate" || name === "quantity") {
+        updatedProducts[index][name as keyof Product] = Number(value) as never;
       } else {
-        updatedProducts[index][name as keyof Product] = value;
+        updatedProducts[index][name as keyof Product] = value as never;
       }
 
       setFormData({ ...formData, products: updatedProducts });
@@ -60,21 +78,15 @@ export default function QuotationFormPage() {
       ...formData,
       products: Array.from(
         { length: count },
-        (_, i) =>
-          formData.products[i] || {
-            description: "",
-            hsnCode: "",
-            rate: "",
-            quantity: "",
-            unit: "KG",
-          }
+        (_, i) => formData.products[i] || defaultProduct
       ),
     });
   };
+
   const genratePayload = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
-      const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
+      const Amount = product.quantity * product.rate;
       totalAmount += Amount;
       return {
         ...product,
@@ -85,7 +97,8 @@ export default function QuotationFormPage() {
     const gstAmount = totalAmount * 0.18;
     const netBasicAmount = totalAmount + gstAmount;
 
-    const payload = {
+    return {
+      quotationId: formData.quotationId,
       date: formateDate(formData.date),
       name: formData.name,
       address: formData.address,
@@ -95,7 +108,6 @@ export default function QuotationFormPage() {
       gstAmount,
       netBasicAmount,
     };
-    return payload;
   };
 
   const handleSubmit = async () => {
@@ -114,12 +126,9 @@ export default function QuotationFormPage() {
 
       if (result.success) {
         const htmlContent = QuotationTemplate(result.quotation);
-
-        // Generate PDF with filename
         const quotationId = result.quotation.quotationId.replace(/\//g, "-");
         const fileName = `Quotation-${quotationId}.pdf`;
 
-        // ✅ Dynamically import html2pdf on the client
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const html2pdf = (await import("html2pdf.js")).default;
@@ -130,9 +139,12 @@ export default function QuotationFormPage() {
           html2canvas: { scale: 2 },
           jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
         };
+        setTimeout(() => {
+          html2pdf().from(htmlContent).set(opt).save();
+        }, 2000);
 
-        // New Promise-based usage:
-        html2pdf().from(htmlContent).set(opt).save();
+        // ✅ Corrected
+        props.onClose(true);
       } else {
         alert("Failed to add quotation: " + result.error);
       }
@@ -143,6 +155,17 @@ export default function QuotationFormPage() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (props.data) {
+      const [day, month, year] = props.data.date.split("/");
+      const formattedDate = `${year}-${month}-${day}`; // Convert to YYYY-MM-DD
+
+      setFormData({
+        ...props.data,
+        date: formattedDate,
+      });
+    }
+  }, [props.data]);
 
   return (
     <>
