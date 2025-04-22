@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -73,8 +75,12 @@
     @apply border-[hsl(var(--border))];
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-roboto text-sm;
   }
+  .primary-btn {
+    @apply px-3.5 py-2 text-sm bg-slate-800 text-white rounded hover:bg-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500;
+  }
+  
 }
 
 @layer utilities {

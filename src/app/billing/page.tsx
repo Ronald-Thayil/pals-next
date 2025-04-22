@@ -422,7 +422,7 @@ export default function QuotationFormPage() {
 
           <button
             onClick={handleSubmit}
-            className="w-full p-3 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="primary-btn"
             disabled={loading}
           >
             {loading ? "Adding..." : "Add Invoice"}
