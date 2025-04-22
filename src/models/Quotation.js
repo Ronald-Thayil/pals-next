@@ -14,6 +14,7 @@ const QuotationSchema = new Schema(
     quotationId: { type: String, required: true, unique: true },
     date: { type: String, required: true },
     name: { type: String, required: true },
+    companyName: { type: String, required: true },
     address: { type: String, required: true },
     productList: [ProductSchema],
     gstAmount: Number,
