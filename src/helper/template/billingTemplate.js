@@ -71,7 +71,7 @@ export const BillingTemplate = (props) => {
             <td>AAFCF7472F</td>
             <td>${props.buyerPanNo}</td>
             <td>${props.shipPanNo}</td>
-            <td colspan="2">${props.invoiceNo}</td>
+            <td colspan="2">${props.invoiceId}</td>
          </tr>
          <tr>
             <td>STATE</td>

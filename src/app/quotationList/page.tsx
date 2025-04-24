@@ -62,7 +62,7 @@ export default function QuotationPage() {
         unit: product.unit as "KG" | "Piece", // Enforcing allowed units
       })),
     };
-    debugger;
+
     setSelected(transformed);
     setModelOpen(true);
   };

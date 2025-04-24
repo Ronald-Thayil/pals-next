@@ -17,9 +17,9 @@ export default function AdminDashboard() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
               {[
-                { name: "Quotation Order", path: "/qlist" },
-                { name: "Purchase Order", path: "/qlist" },
-                { name: "Bills", path: "/qlist" },
+                { name: "Quotation Orders", path: "/quotationList" },
+                { name: "Purchase Orders", path: "/admindashboard" },
+                { name: "Invoices", path: "/invoiceList" },
               ].map((category, index) => {
                 const gradientClasses = [
                   "bg-gradient-to-b from-[#1D3EDE] to-[#4F8EF7]",
