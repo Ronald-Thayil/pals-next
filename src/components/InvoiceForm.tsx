@@ -1,35 +1,37 @@
 "use client";
 
 import React, { useState, ChangeEvent, useEffect } from "react";
-
-import { QuotationTemplate } from "../helper/template/quotationTemplate";
-import { formateDate } from "@/helper/common";
+import { BillingTemplate } from "../helper/template/billingTemplate";
+import { formateDate, numberToWords } from "@/helper/common";
 
 type Product = {
   description: string;
   hsnCode: string;
   rate: number;
   quantity: number;
-  unit: "KG" | "Piece";
+  unit: "KG" | "Piece"; // Allow dynamic keys like 'unit-0', 'unit-1', etc.
 };
 
 type FormData = {
-  quotationId: string;
-  date: string;
-  name: string;
-  companyName: string;
-  address: string;
+  invoiceId: string;
+  invoiceDate: string;
+  buyerInfo: string;
+  shipInfo: string;
+  buyerPanNo: string;
+  buyerState: string;
+  buyerStateCode: string;
+  shipPanNo: string;
+  shipState: string;
+  shipStateCode: string;
   products: Product[];
 };
-
 type PropsTypeValue = {
   data: FormData | null;
   onClose: (fromModal: boolean) => void;
 };
 
-export default function QuotationFormPage(props: PropsTypeValue) {
+export default function InvoiceFormPage(props: PropsTypeValue) {
   const [loading, setLoading] = useState(false);
-
   const defaultProduct: Product = {
     description: "",
     hsnCode: "",
@@ -37,16 +39,19 @@ export default function QuotationFormPage(props: PropsTypeValue) {
     quantity: 0,
     unit: "KG",
   };
-
   const defaultFormData: FormData = {
-    quotationId: "",
-    date: "",
-    name: "",
-    companyName: "",
-    address: "",
+    invoiceId: "",
+    invoiceDate: "",
+    buyerInfo: "",
+    shipInfo: "",
+    buyerPanNo: "",
+    buyerState: "",
+    buyerStateCode: "",
+    shipPanNo: "",
+    shipState: "",
+    shipStateCode: "",
     products: [defaultProduct],
   };
-
   const [formData, setFormData] = useState<FormData>(defaultFormData);
 
   const handleChange = (
@@ -88,7 +93,7 @@ export default function QuotationFormPage(props: PropsTypeValue) {
   const genratePayload = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
-      const Amount = product.quantity * product.rate;
+      const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
       totalAmount += Amount;
       return {
         ...product,
@@ -98,17 +103,25 @@ export default function QuotationFormPage(props: PropsTypeValue) {
 
     const gstAmount = totalAmount * 0.18;
     const netBasicAmount = totalAmount + gstAmount;
+    const roundNetBasicAmount = Math.round(netBasicAmount);
 
     return {
-      quotationId: formData.quotationId,
-      date: formateDate(formData.date),
-      name: formData.name,
-      address: formData.address,
-      companyName: formData.companyName,
+      invoiceId: formData.invoiceId,
+      invoiceDate: formateDate(formData.invoiceDate),
+      buyerInfo: formData.buyerInfo,
+      shipInfo: formData.shipInfo,
+      buyerPanNo: formData.buyerPanNo,
+      buyerState: formData.buyerState,
+      buyerStateCode: formData.buyerStateCode,
+      shipPanNo: formData.shipPanNo,
+      shipState: formData.shipState,
+      shipStateCode: formData.shipStateCode,
       productList,
       totalAmount,
       gstAmount,
       netBasicAmount,
+      roundNetBasicAmount,
+      amountToWords: numberToWords(roundNetBasicAmount),
     };
   };
 
@@ -116,7 +129,7 @@ export default function QuotationFormPage(props: PropsTypeValue) {
     try {
       setLoading(true);
       const payload = genratePayload();
-      const response = await fetch("/api/quotations/add", {
+      const response = await fetch("/api/invoice/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -127,10 +140,13 @@ export default function QuotationFormPage(props: PropsTypeValue) {
       const result = await response.json();
 
       if (result.success) {
-        const htmlContent = QuotationTemplate(result.quotation);
-        const quotationId = result.quotation.quotationId;
-        const fileName = `Quotation-${quotationId}.pdf`;
+        const htmlContent = BillingTemplate(result.invoice);
 
+        // Generate PDF with filename
+        const invoiceId = result.invoice.invoiceId;
+        const fileName = `Invoice-${invoiceId}.pdf`;
+
+        // ✅ Dynamically import html2pdf on the client
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const html2pdf = (await import("html2pdf.js")).default;
@@ -141,6 +157,7 @@ export default function QuotationFormPage(props: PropsTypeValue) {
           html2canvas: { scale: 2 },
           jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
         };
+
         setTimeout(() => {
           html2pdf().from(htmlContent).set(opt).save();
         }, 2000);
@@ -148,7 +165,7 @@ export default function QuotationFormPage(props: PropsTypeValue) {
         // ✅ Corrected
         props.onClose(true);
       } else {
-        alert("Failed to add quotation: " + result.error);
+        alert("Failed to add invoice: " + result.error);
       }
     } catch (error) {
       console.error("Error", error);
@@ -159,12 +176,12 @@ export default function QuotationFormPage(props: PropsTypeValue) {
   };
   useEffect(() => {
     if (props.data) {
-      const [day, month, year] = props.data.date.split("/");
+      const [day, month, year] = props.data.invoiceDate.split("/");
       const formattedDate = `${year}-${month}-${day}`; // Convert to YYYY-MM-DD
 
       setFormData({
         ...props.data,
-        date: formattedDate,
+        invoiceDate: formattedDate,
       });
     }
   }, [props.data]);
@@ -173,8 +190,8 @@ export default function QuotationFormPage(props: PropsTypeValue) {
     <>
       <div className="bg-gray-100 p-4">
         <h2 className="text-xl font-semibold text-gray-800">
-          Quotation Order Form{" "}
-          {formData?.quotationId ? `(${formData?.quotationId})` : ""}
+          Invoice Order Form{" "}
+          {formData?.invoiceId ? `(${formData?.invoiceId})` : ""}
         </h2>
       </div>
       <div className="p-6">
@@ -182,16 +199,16 @@ export default function QuotationFormPage(props: PropsTypeValue) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
               <label
-                htmlFor="date"
+                htmlFor="invoiceDate"
                 className="block text-sm font-medium mb-1 text-gray-600"
               >
-                Date
+                Invoice Date
               </label>
               <input
                 type="date"
-                id="date"
-                name="date"
-                value={formData.date}
+                id="invoiceDate"
+                name="invoiceDate"
+                value={formData.invoiceDate}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
               />
@@ -199,36 +216,122 @@ export default function QuotationFormPage(props: PropsTypeValue) {
 
             <div>
               <label
-                htmlFor="name"
+                htmlFor="buyerPanNo"
                 className="block text-sm font-medium mb-1 text-gray-600"
               >
-                Name
+                Buyer PAN No.
               </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
+                id="buyerPanNo"
+                name="buyerPanNo"
+                value={formData.buyerPanNo}
                 onChange={handleChange}
-                placeholder="Enter your name"
                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
               />
             </div>
 
             <div>
               <label
-                htmlFor="companyName"
+                htmlFor="buyerState"
                 className="block text-sm font-medium mb-1 text-gray-600"
               >
-                Company Name
+                Buyer State Name
               </label>
               <input
                 type="text"
-                id="companyName"
-                name="companyName"
-                value={formData.companyName}
+                id="buyerState"
+                name="buyerState"
+                value={formData.buyerState}
                 onChange={handleChange}
-                placeholder="Enter company name"
+                placeholder="Enter Buyer State Name"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="buyerStateCode"
+                className="block text-sm font-medium mb-1 text-gray-600"
+              >
+                Buyer State Code
+              </label>
+              <input
+                type="text"
+                id="buyerStateCode"
+                name="buyerStateCode"
+                value={formData.buyerStateCode}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="buyerInfo"
+              className="block text-sm font-medium mb-1 text-gray-600"
+            >
+              SOLD TO PARTY / BUYER&apos;S NAME & ADDRESS
+            </label>
+            <textarea
+              id="buyerInfo"
+              name="buyerInfo"
+              value={formData.buyerInfo}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Enter Buyer Info"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label
+                htmlFor="shipPanNo"
+                className="block text-sm font-medium mb-1 text-gray-600"
+              >
+                Party PAN No.
+              </label>
+              <input
+                type="text"
+                id="shipPanNo"
+                name="shipPanNo"
+                value={formData.shipPanNo}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="shipState"
+                className="block text-sm font-medium mb-1 text-gray-600"
+              >
+                Party State Name
+              </label>
+              <input
+                type="text"
+                id="shipState"
+                name="shipState"
+                value={formData.shipState}
+                onChange={handleChange}
+                placeholder="Enter Buyer State Name"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="shipStateCode"
+                className="block text-sm font-medium mb-1 text-gray-600"
+              >
+                Party State Code
+              </label>
+              <input
+                type="text"
+                id="shipStateCode"
+                name="shipStateCode"
+                value={formData.shipStateCode}
+                onChange={handleChange}
+                placeholder="Enter Buyer State Code"
                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
               />
             </div>
@@ -236,18 +339,18 @@ export default function QuotationFormPage(props: PropsTypeValue) {
 
           <div className="mb-4">
             <label
-              htmlFor="address"
+              htmlFor="shipInfo"
               className="block text-sm font-medium mb-1 text-gray-600"
             >
-              Address
+              SHIP TO PARTY / DELIVERY ADDRESS
             </label>
             <textarea
-              id="address"
-              name="address"
-              value={formData.address}
+              id="shipInfo"
+              name="shipInfo"
+              value={formData.shipInfo}
               onChange={handleChange}
               rows={4}
-              placeholder="Enter address"
+              placeholder="Enter Party Info"
               className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
             />
           </div>
@@ -371,7 +474,7 @@ export default function QuotationFormPage(props: PropsTypeValue) {
           className="primary-btn"
           disabled={loading}
         >
-          {loading ? "Adding..." : "Add Quotation"}
+          {loading ? "Adding..." : "Add Invoice"}
         </button>
       </div>
     </>
