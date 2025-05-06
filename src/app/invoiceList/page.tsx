@@ -110,7 +110,7 @@ export default function BillingPage() {
 
   const fetchInvoiceList = useCallback(async () => {
     try {
-      const response = await fetch("/api/invoice");
+      const response = await fetch("/api/invoice", { cache: "no-store" });
       const result = await response.json();
       if (result.success && Array.isArray(result.invoices)) {
         setBillingList(result.invoices);

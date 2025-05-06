@@ -92,7 +92,7 @@ export default function QuotationPage() {
 
   const fetchQuotationList = useCallback(async () => {
     try {
-      const response = await fetch("/api/quotations");
+      const response = await fetch("/api/quotations", { cache: "no-store" });
       const result = await response.json();
       if (result.success && Array.isArray(result.quotations)) {
         setQuotationList(result.quotations);
