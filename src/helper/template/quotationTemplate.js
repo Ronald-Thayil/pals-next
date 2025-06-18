@@ -49,6 +49,7 @@ export const QuotationTemplate = (props) => {
          font-size: 12px;
          text-align: center;
          margin-top: 20px;
+         padding-bottom: 20px;
          }
          .details {
          width: 350px;
