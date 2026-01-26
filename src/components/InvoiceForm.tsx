@@ -3,13 +3,15 @@
 import React, { useState, ChangeEvent, useEffect } from "react";
 import { BillingTemplate } from "../helper/template/billingTemplate";
 import { formateDate, numberToWords } from "@/helper/common";
+import { Button } from "@/components/ui/Button";
+import { Plus, Minus, Package } from "lucide-react";
 
 type Product = {
   description: string;
   hsnCode: string;
   rate: number;
   quantity: number;
-  unit: "KG" | "Piece"; // Allow dynamic keys like 'unit-0', 'unit-1', etc.
+  unit: "KG" | "Piece";
 };
 
 type FormData = {
@@ -25,6 +27,7 @@ type FormData = {
   shipStateCode: string;
   products: Product[];
 };
+
 type PropsTypeValue = {
   data: FormData | null;
   onClose: (fromModal: boolean) => void;
@@ -62,7 +65,7 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
 
     if (index !== null) {
       const updatedProducts = [...formData.products];
-      const updatedProduct = { ...updatedProducts[index] }; // clone the specific product
+      const updatedProduct = { ...updatedProducts[index] };
 
       if (name.startsWith("unit")) {
         updatedProduct.unit = value as "KG" | "Piece";
@@ -72,28 +75,31 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
         updatedProduct[name as keyof Product] = value as never;
       }
 
-      updatedProducts[index] = updatedProduct; // replace with updated clone
+      updatedProducts[index] = updatedProduct;
       setFormData({ ...formData, products: updatedProducts });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleProductCountChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const count = parseInt(e.target.value);
+  const addProduct = () => {
     setFormData({
       ...formData,
-      products: Array.from(
-        { length: count },
-        (_, i) => formData.products[i] || defaultProduct
-      ),
+      products: [...formData.products, defaultProduct],
     });
+  };
+
+  const removeProduct = (index: number) => {
+    if (formData.products.length > 1) {
+      const updatedProducts = formData.products.filter((_, i) => i !== index);
+      setFormData({ ...formData, products: updatedProducts });
+    }
   };
 
   const genratePayload = () => {
     let totalAmount = 0;
     const productList = formData.products.map((product) => {
-      const Amount = Number(product.quantity) * Number(product.rate); // Fix: Use * instead of +
+      const Amount = Number(product.quantity) * Number(product.rate);
       totalAmount += Amount;
       return {
         ...product,
@@ -141,12 +147,9 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
 
       if (result.success) {
         const htmlContent = BillingTemplate(result.invoice);
-
-        // Generate PDF with filename
         const invoiceId = result.invoice.invoiceId;
         const fileName = `Invoice-${invoiceId}.pdf`;
 
-        // ✅ Dynamically import html2pdf on the client
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const html2pdf = (await import("html2pdf.js")).default;
@@ -162,7 +165,6 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
           html2pdf().from(htmlContent).set(opt).save();
         }, 2000);
 
-        // ✅ Corrected
         props.onClose(true);
       } else {
         alert("Failed to add invoice: " + result.error);
@@ -174,10 +176,11 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (props.data) {
       const [day, month, year] = props.data.invoiceDate.split("/");
-      const formattedDate = `${year}-${month}-${day}`; // Convert to YYYY-MM-DD
+      const formattedDate = `${year}-${month}-${day}`;
 
       setFormData({
         ...props.data,
@@ -186,23 +189,23 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
     }
   }, [props.data]);
 
+  const inputClass = "w-full px-3.5 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500";
+  const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
+
   return (
     <>
-      <div className="bg-gray-100 p-4">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Invoice Order Form{" "}
-          {formData?.invoiceId ? `(${formData?.invoiceId})` : ""}
-        </h2>
-      </div>
-      <div className="p-6">
-        <div className="overflow-auto max-h-[70vh] pr-2 -mr-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      {/* Form Content */}
+      <div className="p-6 overflow-auto max-h-[calc(90vh-140px)] scrollbar-thin">
+        {/* Invoice Details Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded flex items-center justify-center text-xs font-bold">1</span>
+            Invoice Details
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label
-                htmlFor="invoiceDate"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
-                Invoice Date
+              <label htmlFor="invoiceDate" className={labelClass}>
+                Invoice Date <span className="text-error-500">*</span>
               </label>
               <input
                 type="date"
@@ -210,15 +213,12 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="invoiceDate"
                 value={formData.invoiceDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="buyerPanNo"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
+              <label htmlFor="buyerPanNo" className={labelClass}>
                 Buyer PAN No.
               </label>
               <input
@@ -227,16 +227,14 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="buyerPanNo"
                 value={formData.buyerPanNo}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="AAAAA0000A"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="buyerState"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
-                Buyer State Name
+              <label htmlFor="buyerState" className={labelClass}>
+                Buyer State
               </label>
               <input
                 type="text"
@@ -244,16 +242,14 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="buyerState"
                 value={formData.buyerState}
                 onChange={handleChange}
-                placeholder="Enter Buyer State Name"
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter state"
+                className={inputClass}
               />
             </div>
+
             <div>
-              <label
-                htmlFor="buyerStateCode"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
-                Buyer State Code
+              <label htmlFor="buyerStateCode" className={labelClass}>
+                State Code
               </label>
               <input
                 type="text"
@@ -261,33 +257,44 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="buyerStateCode"
                 value={formData.buyerStateCode}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="e.g. 27"
+                className={inputClass}
               />
             </div>
           </div>
-          <div className="mb-4">
-            <label
-              htmlFor="buyerInfo"
-              className="block text-sm font-medium mb-1 text-gray-600"
-            >
-              SOLD TO PARTY / BUYER&apos;S NAME & ADDRESS
+        </div>
+
+        {/* Buyer Info Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded flex items-center justify-center text-xs font-bold">2</span>
+            Buyer Information
+          </h3>
+          <div>
+            <label htmlFor="buyerInfo" className={labelClass}>
+              Buyer Name & Address <span className="text-error-500">*</span>
             </label>
             <textarea
               id="buyerInfo"
               name="buyerInfo"
               value={formData.buyerInfo}
               onChange={handleChange}
-              rows={4}
-              placeholder="Enter Buyer Info"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              rows={3}
+              placeholder="Enter complete buyer name and address"
+              className={`${inputClass} resize-none`}
             />
           </div>
+        </div>
+
+        {/* Shipping Info Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+            <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded flex items-center justify-center text-xs font-bold">3</span>
+            Shipping Details
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label
-                htmlFor="shipPanNo"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
+              <label htmlFor="shipPanNo" className={labelClass}>
                 Party PAN No.
               </label>
               <input
@@ -296,16 +303,14 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="shipPanNo"
                 value={formData.shipPanNo}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="AAAAA0000A"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="shipState"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
-                Party State Name
+              <label htmlFor="shipState" className={labelClass}>
+                Party State
               </label>
               <input
                 type="text"
@@ -313,17 +318,14 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="shipState"
                 value={formData.shipState}
                 onChange={handleChange}
-                placeholder="Enter Buyer State Name"
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter state"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="shipStateCode"
-                className="block text-sm font-medium mb-1 text-gray-600"
-              >
-                Party State Code
+              <label htmlFor="shipStateCode" className={labelClass}>
+                State Code
               </label>
               <input
                 type="text"
@@ -331,151 +333,177 @@ export default function InvoiceFormPage(props: PropsTypeValue) {
                 name="shipStateCode"
                 value={formData.shipStateCode}
                 onChange={handleChange}
-                placeholder="Enter Buyer State Code"
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                placeholder="e.g. 27"
+                className={inputClass}
               />
             </div>
           </div>
 
-          <div className="mb-4">
-            <label
-              htmlFor="shipInfo"
-              className="block text-sm font-medium mb-1 text-gray-600"
-            >
-              SHIP TO PARTY / DELIVERY ADDRESS
+          <div>
+            <label htmlFor="shipInfo" className={labelClass}>
+              Delivery Address
             </label>
             <textarea
               id="shipInfo"
               name="shipInfo"
               value={formData.shipInfo}
               onChange={handleChange}
-              rows={4}
-              placeholder="Enter Party Info"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+              rows={3}
+              placeholder="Enter complete delivery address"
+              className={`${inputClass} resize-none`}
             />
           </div>
+        </div>
 
-          <div className="mb-6 w-48">
-            <label
-              htmlFor="products"
-              className="block text-sm font-medium mb-1 text-gray-600"
+        {/* Products Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <span className="w-6 h-6 bg-primary-100 text-primary-600 rounded flex items-center justify-center text-xs font-bold">4</span>
+              Products
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={addProduct}
+              leftIcon={<Plus className="w-4 h-4" />}
             >
-              Number of Products
-            </label>
-            <input
-              type="number"
-              id="products"
-              min="1"
-              value={formData.products.length}
-              onChange={handleProductCountChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-            />
+              Add Product
+            </Button>
           </div>
 
-          {formData.products.map((product, index) => (
-            <div
-              key={`products-${index}`}
-              className="border border-gray-200 rounded-md p-4 mb-5 bg-gray-50"
-            >
-              <h2 className="text-md font-medium mb-3 text-gray-700">
-                Product {index + 1}
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm mb-1 text-gray-600">
-                    Description
-                  </label>
-                  <input
-                    type="text"
-                    name="description"
-                    value={product.description}
-                    onChange={(e) => handleChange(e, index)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  />
+          <div className="space-y-4">
+            {formData.products.map((product, index) => (
+              <div
+                key={`products-${index}`}
+                className="border border-slate-200 rounded-xl p-4 bg-slate-50 relative"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center">
+                      <Package className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700">Product {index + 1}</span>
+                  </div>
+                  {formData.products.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeProduct(index)}
+                      className="p-1.5 text-slate-400 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm mb-1 text-gray-600">
-                    HSN Code
-                  </label>
-                  <input
-                    type="text"
-                    name="hsnCode"
-                    value={product.hsnCode}
-                    onChange={(e) => handleChange(e, index)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="lg:col-span-2">
+                    <label className={labelClass}>Description</label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={product.description}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="Product description"
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm mb-1 text-gray-600">
-                    Rate
-                  </label>
-                  <input
-                    type="number"
-                    name="rate"
-                    value={product.rate}
-                    onChange={(e) => handleChange(e, index)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  />
-                </div>
+                  <div>
+                    <label className={labelClass}>HSN Code</label>
+                    <input
+                      type="text"
+                      name="hsnCode"
+                      value={product.hsnCode}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="HSN"
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm mb-1 text-gray-600">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={product.quantity}
-                    onChange={(e) => handleChange(e, index)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  />
-                </div>
+                  <div>
+                    <label className={labelClass}>Rate (₹)</label>
+                    <input
+                      type="number"
+                      name="rate"
+                      value={product.rate}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="0.00"
+                      className={inputClass}
+                    />
+                  </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-sm mb-1 text-gray-600">
-                    Unit
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center text-sm">
-                      <input
-                        type="radio"
-                        name={`unit-${index}`}
-                        value="KG"
-                        checked={product.unit === "KG"}
-                        onChange={(e) => handleChange(e, index)}
-                        className="mr-2"
-                      />
-                      KG
-                    </label>
-                    <label className="flex items-center text-sm">
-                      <input
-                        type="radio"
-                        name={`unit-${index}`}
-                        value="Piece"
-                        checked={product.unit === "Piece"}
-                        onChange={(e) => handleChange(e, index)}
-                        className="mr-2"
-                      />
-                      Piece
-                    </label>
+                  <div>
+                    <label className={labelClass}>Quantity</label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={product.quantity}
+                      onChange={(e) => handleChange(e, index)}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 lg:col-span-5">
+                    <label className={labelClass}>Unit</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`unit-${index}`}
+                          value="KG"
+                          checked={product.unit === "KG"}
+                          onChange={(e) => handleChange(e, index)}
+                          className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-slate-700">KG</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`unit-${index}`}
+                          value="Piece"
+                          checked={product.unit === "Piece"}
+                          onChange={(e) => handleChange(e, index)}
+                          className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-slate-700">Piece</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
+
+                {/* Product Amount Preview */}
+                {product.rate > 0 && product.quantity > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <p className="text-sm text-slate-600">
+                      Amount: <span className="font-medium text-slate-900">₹{(product.rate * product.quantity).toLocaleString('en-IN')}</span>
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-      <div className="bg-gray-100 p-4 text-right rounded-b-lg">
-        <button
-          onClick={handleSubmit}
-          className="primary-btn"
-          disabled={loading}
+
+      {/* Footer */}
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => props.onClose(false)}
         >
-          {loading ? "Adding..." : "Add Invoice"}
-        </button>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          isLoading={loading}
+        >
+          {props.data ? "Update Invoice" : "Create Invoice"}
+        </Button>
       </div>
     </>
   );

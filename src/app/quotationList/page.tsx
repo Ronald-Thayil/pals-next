@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Pencil } from "lucide-react";
-import HeaderAdmin from "@/components/HeaderAdmin";
-import FooterAdmin from "@/components/FooterAdmin";
+import { Pencil, Plus, Search } from "lucide-react";
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Card } from "@/components/ui/Card";
 import QuotationFormPage from "@/components/QuotationForm";
 
 type Product = {
@@ -46,6 +48,7 @@ export default function QuotationPage() {
   const [asc, setAsc] = useState(true);
   const [isModelOpen, setModelOpen] = useState(false);
   const [selected, setSelected] = useState<FormData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const transformQuotationData = (data: Quotation) => {
     const transformed: FormData = {
@@ -59,7 +62,7 @@ export default function QuotationPage() {
         hsnCode: product.hsnCode,
         rate: product.rate,
         quantity: product.quantity,
-        unit: product.unit as "KG" | "Piece", // Enforcing allowed units
+        unit: product.unit as "KG" | "Piece",
       })),
     };
 
@@ -92,6 +95,7 @@ export default function QuotationPage() {
 
   const fetchQuotationList = useCallback(async () => {
     try {
+      setIsLoading(true);
       const response = await fetch("/api/quotations", { cache: "no-store" });
       const result = await response.json();
       if (result.success && Array.isArray(result.quotations)) {
@@ -99,6 +103,8 @@ export default function QuotationPage() {
       }
     } catch (error) {
       console.error("Error fetching quotations:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -117,81 +123,112 @@ export default function QuotationPage() {
     [fetchQuotationList]
   );
 
+  const columns = [
+    { key: "quotationId" as keyof Quotation, label: "Quotation ID" },
+    { key: "date" as keyof Quotation, label: "Date" },
+    { key: "name" as keyof Quotation, label: "Customer" },
+    { key: "netBasicAmount" as keyof Quotation, label: "Amount" },
+  ];
+
   return (
-    <>
-      <HeaderAdmin />
-      <div className="container mx-auto px-4 py-4">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-6">
-          Quotation List
-        </h1>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:max-w-xs border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
-          <button onClick={() => setModelOpen(true)} className="primary-btn">
-            Add Quotation
-          </button>
-        </div>
-
-        <div
-          className="overflow-x-auto bg-white shadow rounded-lg"
-          style={{ height: "calc(100vh - 287px)" }}
+    <AdminLayout
+      title="Quotations"
+      description="Manage and track all your quotations"
+      action={
+        <Button
+          onClick={() => setModelOpen(true)}
+          leftIcon={<Plus className="w-4 h-4" />}
         >
-          <div className="h-full overflow-y-auto">
-            <table className="min-w-full text-sm text-gray-700">
-              <thead className="sticky top-0 bg-slate-800 text-white z-10">
-                <tr className="border-b border-gray-200">
-                  {[
-                    { key: "quotationId", label: "Quotation ID" },
-                    { key: "date", label: "Date" },
-                    { key: "name", label: "Name" },
-                    { key: "netBasicAmount", label: "Amount" },
-                  ].map((col) => (
+          Add Quotation
+        </Button>
+      }
+    >
+      {/* Search and Filters */}
+      <Card className="p-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search quotations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          <div className="text-sm text-slate-500">
+            {filteredData.length} quotation{filteredData.length !== 1 ? 's' : ''} found
+          </div>
+        </div>
+      </Card>
+
+      {/* Table */}
+      <Card className="overflow-hidden">
+        {isLoading ? (
+          <div className="animate-pulse">
+            <div className="h-12 bg-slate-100 border-b border-slate-200" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 border-b border-slate-100 flex items-center px-6 gap-4">
+                <div className="h-4 bg-slate-200 rounded w-1/5" />
+                <div className="h-4 bg-slate-200 rounded w-1/5" />
+                <div className="h-4 bg-slate-200 rounded w-1/5" />
+                <div className="h-4 bg-slate-200 rounded w-1/5" />
+                <div className="h-4 bg-slate-200 rounded w-1/5" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  {columns.map((col) => (
                     <th
                       key={col.key}
-                      onClick={() => handleSort(col.key as keyof Quotation)}
-                      className="px-5 py-3 text-left cursor-pointer"
+                      onClick={() => handleSort(col.key)}
+                      className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer select-none hover:bg-slate-100 transition-colors"
                     >
-                      <span>{col.label}</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        className="inline-block ml-2 h-4 w-4"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M8.25 15 12 18.75 15.75 15M6 9l6-6 6 6"
-                        />
-                      </svg>
+                      <div className="flex items-center gap-2">
+                        <span>{col.label}</span>
+                        <svg
+                          className={`w-4 h-4 transition-colors ${sortColumn === col.key ? 'text-primary-600' : 'text-slate-400'}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                      </div>
                     </th>
                   ))}
-                  <th className="px-5 py-3 text-left">Action</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {filteredData.length > 0 ? (
                   filteredData.map((item) => (
                     <tr
                       key={item._id}
-                      className="border-t hover:bg-gray-50 transition"
+                      className="transition-colors hover:bg-slate-50"
                     >
-                      <td className="px-5 py-3">{item.quotationId}</td>
-                      <td className="px-5 py-3">{item.date}</td>
-                      <td className="px-5 py-3">{item.name}</td>
-                      <td className="px-5 py-3">₹ {item.netBasicAmount}</td>
-                      <td className="px-5 py-3">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        {item.quotationId}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {item.date}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {item.name}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        ₹{item.netBasicAmount?.toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-6 py-4">
                         <button
                           onClick={() => transformQuotationData(item)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -200,49 +237,32 @@ export default function QuotationPage() {
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-5 py-10 text-center text-gray-500"
-                    >
-                      No quotations found.
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-slate-500">
+                        <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-sm font-medium text-slate-900">No quotations found</p>
+                        <p className="text-sm text-slate-500 mt-1">Create your first quotation to get started</p>
+                      </div>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
-
-        {isModelOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white max-w-5xl w-full max-h-[90vh] rounded-lg shadow-lg overflow-hidden">
-              <div className="relative">
-                <button
-                  onClick={() => onCloseModal(false)}
-                  className="absolute right-3 top-4 transition-transform duration-500 hover:rotate-[180deg]"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="size-6"
-                    fill="none"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-                <QuotationFormPage data={selected} onClose={onCloseModal} />
-              </div>
-            </div>
-          </div>
         )}
-      </div>
-      <FooterAdmin />
-    </>
+      </Card>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModelOpen}
+        onClose={() => onCloseModal(false)}
+        title={selected ? "Edit Quotation" : "Create Quotation"}
+        size="xl"
+      >
+        <QuotationFormPage data={selected} onClose={onCloseModal} />
+      </Modal>
+    </AdminLayout>
   );
 }
