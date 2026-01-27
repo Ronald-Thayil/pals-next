@@ -129,18 +129,15 @@ export function Table<T extends Record<string, unknown>>({
     );
 }
 
-interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    onSearch?: (value: string) => void;
-}
+
 
 export function SearchInput({
     value,
     onChange,
-    onSearch,
     placeholder = 'Search...',
     className = '',
     ...props
-}: SearchInputProps) {
+}: React.InputHTMLAttributes<HTMLInputElement> ) {
     return (
         <div className="relative">
             <svg

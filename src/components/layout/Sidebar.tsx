@@ -7,7 +7,6 @@ import {
     LayoutDashboard,
     FileText,
     Receipt,
-    ClipboardList,
     Building2
 } from 'lucide-react';
 
