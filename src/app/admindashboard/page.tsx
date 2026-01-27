@@ -24,7 +24,7 @@ const categories = [
   },
   {
     name: "Purchase Orders",
-    path: "/admindashboard",
+    path: "/purchaseOrderList",
     description: "Track and manage purchase orders",
     icon: ClipboardList,
     bgLight: "bg-emerald-50",

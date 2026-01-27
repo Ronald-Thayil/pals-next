@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Download, Pencil, Plus, Search } from "lucide-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Card } from "@/components/ui/Card";
 import QuotationFormPage from "@/components/QuotationForm";
+import { downloadPDF } from "@/helper/pdfUtils";
 
 type Product = {
   description: string;
@@ -49,6 +50,30 @@ export default function QuotationPage() {
   const [isModelOpen, setModelOpen] = useState(false);
   const [selected, setSelected] = useState<FormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleDownloadPDF = async (quotation: Quotation) => {
+    try {
+      const response = await fetch("/api/quotations/download", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quotationId: quotation.quotationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const data = await response.json();
+      if (data.success && data.html) {
+        downloadPDF(data.html, `Quotation_${quotation.quotationId}.pdf`);
+      }
+    } catch (error) {
+      console.error("Error downloading quotation PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+    }
+  };
 
   const transformQuotationData = (data: Quotation) => {
     const transformed: FormData = {
@@ -227,10 +252,20 @@ export default function QuotationPage() {
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => transformQuotationData(item)}
+                         onClick={() => transformQuotationData(item)}
                           className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          title="Download PDF"
                         >
                           <Pencil className="h-4 w-4" />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleDownloadPDF(item)}
+                          className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                          title="Download PDF"
+                        >
+                          <Download className="h-4 w-4" />
                         </button>
                       </td>
                     </tr>

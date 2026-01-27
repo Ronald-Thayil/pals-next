@@ -6,7 +6,7 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Card } from "@/components/ui/Card";
-import InvoiceFormPage from "@/components/InvoiceForm";
+import PurchaseOrderFormPage from "@/components/PurchaseOrderForm";
 import { downloadPDF } from "@/helper/pdfUtils";
 
 type Product = {
@@ -18,60 +18,47 @@ type Product = {
 };
 
 type FormData = {
-  invoiceId: string;
-  invoiceDate: string;
-  buyerInfo: string;
-  shipInfo: string;
-  buyerPanNo: string;
-  buyerState: string;
-  buyerStateCode: string;
-  shipPanNo: string;
-  shipState: string;
-  shipStateCode: string;
+  purchaseOrderId: string;
+  date: string;
+  name: string;
+  companyName: string;
+  address: string;
   products: Product[];
 };
 
-type Invoice = {
+type PurchaseOrder = {
   _id: string;
-  invoiceId: string;
-  invoiceDate: string;
-  buyerInfo: string;
-  shipInfo: string;
-  buyerPanNo: string;
-  buyerState: string;
-  buyerStateCode: string;
-  shipPanNo: string;
-  shipState: string;
-  shipStateCode: string;
+  purchaseOrderId: string;
+  date: string;
+  name: string;
+  address: string;
+  companyName: string;
   productList: (Product & { Amount: number; _id: string })[];
-  totalAmount: number;
   gstAmount: number;
   netBasicAmount: number;
-  roundNetBasicAmount: number;
-  amountToWords: string;
   timestamp: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
 };
 
-export default function BillingPage() {
-  const [billingList, setBillingList] = useState<Invoice[]>([]);
+export default function PurchaseOrderPage() {
+  const [purchaseOrderList, setPurchaseOrderList] = useState<PurchaseOrder[]>([]);
   const [search, setSearch] = useState("");
-  const [sortColumn, setSortColumn] = useState<keyof Invoice | "">("");
+  const [sortColumn, setSortColumn] = useState<keyof PurchaseOrder | "">("");
   const [asc, setAsc] = useState(true);
   const [isModelOpen, setModelOpen] = useState(false);
   const [selected, setSelected] = useState<FormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleDownloadPDF = async (invoice: Invoice) => {
+  const handleDownloadPDF = async (purchaseOrder: PurchaseOrder) => {
     try {
-      const response = await fetch("/api/invoice/download", {
+      const response = await fetch("/api/purchaseorders/download", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ invoiceId: invoice.invoiceId }),
+        body: JSON.stringify({ purchaseOrderId: purchaseOrder.purchaseOrderId }),
       });
 
       if (!response.ok) {
@@ -80,26 +67,21 @@ export default function BillingPage() {
 
       const data = await response.json();
       if (data.success && data.html) {
-        downloadPDF(data.html, `Invoice_${invoice.invoiceId}.pdf`);
+        downloadPDF(data.html, `PurchaseOrder_${purchaseOrder.purchaseOrderId}.pdf`);
       }
     } catch (error) {
-      console.error("Error downloading invoice PDF:", error);
+      console.error("Error downloading purchase order PDF:", error);
       alert("Failed to download PDF. Please try again.");
     }
   };
 
-  const transformQuotationData = (data: Invoice) => {
+  const transformPurchaseOrderData = (data: PurchaseOrder) => {
     const transformed: FormData = {
-      invoiceId: data.invoiceId,
-      invoiceDate: data.invoiceDate,
-      buyerInfo: data.buyerInfo,
-      shipInfo: data.shipInfo,
-      buyerPanNo: data.buyerPanNo,
-      buyerState: data.buyerState,
-      buyerStateCode: data.buyerStateCode,
-      shipPanNo: data.shipPanNo,
-      shipState: data.shipState,
-      shipStateCode: data.shipStateCode,
+      purchaseOrderId: data.purchaseOrderId,
+      date: data.date,
+      name: data.name,
+      companyName: data.companyName,
+      address: data.address,
       products: data.productList.map((product) => ({
         description: product.description,
         hsnCode: product.hsnCode,
@@ -113,9 +95,9 @@ export default function BillingPage() {
     setModelOpen(true);
   };
 
-  const filteredData = billingList
+  const filteredData = purchaseOrderList
     .filter((item) =>
-      [item.invoiceId, item.invoiceDate, item.buyerPanNo, item.shipPanNo]
+      [item.purchaseOrderId, item.date, item.name]
         .join(" ")
         .toLowerCase()
         .includes(search.toLowerCase())
@@ -127,7 +109,7 @@ export default function BillingPage() {
       return 0;
     });
 
-  const handleSort = (column: keyof Invoice) => {
+  const handleSort = (column: keyof PurchaseOrder) => {
     if (sortColumn === column) {
       setAsc(!asc);
     } else {
@@ -136,53 +118,53 @@ export default function BillingPage() {
     }
   };
 
-  const fetchInvoiceList = useCallback(async () => {
+  const fetchPurchaseOrderList = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/invoice", { cache: "no-store" });
+      const response = await fetch("/api/purchaseorders", { cache: "no-store" });
       const result = await response.json();
-      if (result.success && Array.isArray(result.invoices)) {
-        setBillingList(result.invoices);
+      if (result.success && Array.isArray(result.purchaseOrders)) {
+        setPurchaseOrderList(result.purchaseOrders);
       }
     } catch (error) {
-      console.error("Error fetching invoices:", error);
+      console.error("Error fetching purchase orders:", error);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchInvoiceList();
-  }, [fetchInvoiceList]);
+    fetchPurchaseOrderList();
+  }, [fetchPurchaseOrderList]);
 
   const onCloseModal = useCallback(
     (fromModal: boolean) => {
       setSelected(null);
       setModelOpen(false);
       if (fromModal) {
-        fetchInvoiceList();
+        fetchPurchaseOrderList();
       }
     },
-    [fetchInvoiceList]
+    [fetchPurchaseOrderList]
   );
 
   const columns = [
-    { key: "invoiceId" as keyof Invoice, label: "Invoice ID" },
-    { key: "invoiceDate" as keyof Invoice, label: "Date" },
-    { key: "buyerPanNo" as keyof Invoice, label: "Buyer PAN" },
-    { key: "netBasicAmount" as keyof Invoice, label: "Amount" },
+    { key: "purchaseOrderId" as keyof PurchaseOrder, label: "Purchase Order ID" },
+    { key: "date" as keyof PurchaseOrder, label: "Date" },
+    { key: "name" as keyof PurchaseOrder, label: "Supplier" },
+    { key: "netBasicAmount" as keyof PurchaseOrder, label: "Amount" },
   ];
 
   return (
     <AdminLayout
-      title="Invoices"
-      description="Manage and track all your invoices"
+      title="Purchase Orders"
+      description="Manage and track all your purchase orders"
       action={
         <Button
           onClick={() => setModelOpen(true)}
           leftIcon={<Plus className="w-4 h-4" />}
         >
-          Add Invoice
+          Add Purchase Order
         </Button>
       }
     >
@@ -193,14 +175,14 @@ export default function BillingPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Search invoices..."
+              placeholder="Search purchase orders..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-900 text-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div className="text-sm text-slate-500">
-            {filteredData.length} invoice{filteredData.length !== 1 ? 's' : ''} found
+            {filteredData.length} purchase order{filteredData.length !== 1 ? 's' : ''} found
           </div>
         </div>
       </Card>
@@ -247,7 +229,7 @@ export default function BillingPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Actions
                   </th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Download
                   </th>
                 </tr>
@@ -260,25 +242,26 @@ export default function BillingPage() {
                       className="transition-colors hover:bg-slate-50"
                     >
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                        {item.invoiceId}
+                        {item.purchaseOrderId}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">
-                        {item.invoiceDate}
+                        {item.date}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">
-                        {item.buyerPanNo}
+                        {item.name}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">
                         ₹{item.netBasicAmount?.toLocaleString('en-IN')}
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => transformQuotationData(item)}
+                          onClick={() => transformPurchaseOrderData(item)}
                           className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                           title="Download PDF"
                         >
-                           <Pencil className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </button>
+                        
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -288,6 +271,7 @@ export default function BillingPage() {
                         >
                           <Download className="h-4 w-4" />
                         </button>
+                        
                       </td>
                     </tr>
                   ))
@@ -298,8 +282,8 @@ export default function BillingPage() {
                         <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="text-sm font-medium text-slate-900">No invoices found</p>
-                        <p className="text-sm text-slate-500 mt-1">Create your first invoice to get started</p>
+                        <p className="text-sm font-medium text-slate-900">No purchase orders found</p>
+                        <p className="text-sm text-slate-500 mt-1">Create your first purchase order to get started</p>
                       </div>
                     </td>
                   </tr>
@@ -314,10 +298,10 @@ export default function BillingPage() {
       <Modal
         isOpen={isModelOpen}
         onClose={() => onCloseModal(false)}
-        title={selected ? "Edit Invoice" : "Create Invoice"}
+        title={selected ? "Edit Purchase Order" : "Create Purchase Order"}
         size="xl"
       >
-        <InvoiceFormPage data={selected} onClose={onCloseModal} />
+        <PurchaseOrderFormPage data={selected} onClose={onCloseModal} />
       </Modal>
     </AdminLayout>
   );
