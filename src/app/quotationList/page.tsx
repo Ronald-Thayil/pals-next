@@ -67,7 +67,7 @@ export default function QuotationPage() {
 
       const data = await response.json();
       if (data.success && data.html) {
-        downloadPDF(data.html, `Quotation_${quotation.quotationId}.pdf`);
+        await downloadPDF(data.html, `Quotation_${quotation.quotationId}.pdf`);
       }
     } catch (error) {
       console.error("Error downloading quotation PDF:", error);
@@ -252,7 +252,7 @@ export default function QuotationPage() {
                       </td>
                       <td className="px-6 py-4">
                         <button
-                         onClick={() => transformQuotationData(item)}
+                          onClick={() => transformQuotationData(item)}
                           className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                           title="Download PDF"
                         >

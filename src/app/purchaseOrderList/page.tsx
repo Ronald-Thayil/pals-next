@@ -67,7 +67,7 @@ export default function PurchaseOrderPage() {
 
       const data = await response.json();
       if (data.success && data.html) {
-        downloadPDF(data.html, `PurchaseOrder_${purchaseOrder.purchaseOrderId}.pdf`);
+        await downloadPDF(data.html, `PurchaseOrder_${purchaseOrder.purchaseOrderId}.pdf`);
       }
     } catch (error) {
       console.error("Error downloading purchase order PDF:", error);
@@ -229,7 +229,7 @@ export default function PurchaseOrderPage() {
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Actions
                   </th>
-                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Download
                   </th>
                 </tr>
@@ -261,7 +261,7 @@ export default function PurchaseOrderPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        
+
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -271,7 +271,7 @@ export default function PurchaseOrderPage() {
                         >
                           <Download className="h-4 w-4" />
                         </button>
-                        
+
                       </td>
                     </tr>
                   ))

@@ -80,7 +80,7 @@ export default function BillingPage() {
 
       const data = await response.json();
       if (data.success && data.html) {
-        downloadPDF(data.html, `Invoice_${invoice.invoiceId}.pdf`);
+        await downloadPDF(data.html, `Invoice_${invoice.invoiceId}.pdf`);
       }
     } catch (error) {
       console.error("Error downloading invoice PDF:", error);
@@ -277,7 +277,7 @@ export default function BillingPage() {
                           className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                           title="Download PDF"
                         >
-                           <Pencil className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </button>
                       </td>
                       <td className="px-6 py-4">

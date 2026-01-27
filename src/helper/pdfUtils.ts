@@ -1,11 +1,16 @@
-import html2pdf from 'html2pdf.js';
-
 /**
  * Generates a PDF from HTML content and downloads it
  * @param htmlContent - The HTML content to convert to PDF
  * @param filename - The filename for the downloaded PDF
  */
-export const downloadPDF = (htmlContent: string, filename: string) => {
+export const downloadPDF = async (htmlContent: string, filename: string) => {
+  if (typeof window === 'undefined') {
+    console.warn('PDF download is only available in the browser');
+    return;
+  }
+
+  const html2pdf = (await import('html2pdf.js')).default;
+
   const element = document.createElement('div');
   element.innerHTML = htmlContent;
 
@@ -26,6 +31,11 @@ export const downloadPDF = (htmlContent: string, filename: string) => {
  * @param filename - The filename for the downloaded PDF
  */
 export const downloadPDFFromAPI = async (endpoint: string, filename: string) => {
+  if (typeof window === 'undefined') {
+    console.warn('PDF download is only available in the browser');
+    return;
+  }
+
   try {
     const response = await fetch(endpoint, {
       method: 'GET',
